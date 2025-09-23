@@ -1,0 +1,17 @@
+benchmark,time,data_size,type
+read,586750493,8,uncached
+read,137699714,8,cached
+write,379555195,8,uncached
+write,449608075,8,cached
+read,1176982059,4,uncached
+read,238099360,4,cached
+write,622614987,4,uncached
+write,517514104,4,cached
+read,2345658904,2,uncached
+read,475018914,2,cached
+write,1244365237,2,uncached
+write,726362218,2,cached
+read,4820276114,1,uncached
+read,744813035,1,cached
+write,2488159909,1,uncached
+write,1062641361,1,cached
