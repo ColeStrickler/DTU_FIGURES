@@ -1,0 +1,84 @@
+
+\documentclass[tikz,border=5pt]{standalone}
+\usepackage{tikz}
+
+\usetikzlibrary{perspective}
+
+
+\begin{document}
+
+
+\def\DX{4}
+\def\DY{3}
+\def\DZ{4}
+
+\definecolor{c0}{HTML}{1F77B4} % red
+\definecolor{c1}{HTML}{2CA02C} % green
+\definecolor{c2}{HTML}{D62728} % blue
+\definecolor{c3}{HTML}{9467BD} % purple
+\definecolor{c4}{HTML}{17BECF} % cyan
+\definecolor{c5}{HTML}{FF7F0E} % orange
+\definecolor{c6}{HTML}{8C564B}
+
+
+
+\newcommand{\colorbyy}[1]{%
+\ifcase#1 c0\or c1\or c2\or c3\or c4\or c5\fi
+}
+
+\newcommand{\colorbyyRev}[1]{%
+\ifcase#1 c5\or c4\or c3\or c2\or c1\or c0\fi
+}
+
+\newcommand{\colorbyyRevY}[1]{%
+\ifcase#1 c3\or c2\or c1\or c0\fi
+}
+
+
+
+\newcommand{\cubeview}[4]{% #1=color, #2=x, #3=y, #4=z
+    \begin{scope}[shift={(#2,#3,#4)}]
+        % bottom face
+        \draw[fill=#1!40, draw=black] (0,0,0) -- (1,0,0) -- (1,1,0) -- (0,1,0) -- cycle;
+        % back face
+        \draw[fill=#1!60, draw=black] (0,1,0) -- (1,1,0) -- (1,1,1) -- (0,1,1) -- cycle;
+        % left face
+        \draw[fill=#1!60, draw=black] (0,0,0) -- (0,1,0) -- (0,1,1) -- (0,0,1) -- cycle;
+                % right face
+        \draw[fill=#1!70, draw=black] (1,0,0) -- (1,1,0) -- (1,1,1) -- (1,0,1) -- cycle;
+         % front face
+        \draw[fill=#1!70, draw=black] (0,0,0) -- (1,0,0) -- (1,0,1) -- (0,0,1) -- cycle;
+                % top face
+        \draw[fill=#1!50, draw=black] (0,0,1) -- (1,0,1) -- (1,1,1) -- (0,1,1) -- cycle;
+
+
+    \end{scope}
+}
+
+
+\begin{tikzpicture}[
+    3d view={30}{15},
+    perspective={p={(0,0,300)}},
+    line join=round,
+    line width=0.4pt
+]
+
+
+\pgfmathtruncatemacro{\DYminusone}{\DY-1}
+\pgfmathtruncatemacro{\DXminusone}{\DX-1}
+\pgfmathtruncatemacro{\DZminusone}{\DZ-1}
+\foreach \z in {0,1,...,\DZ}{
+    \foreach \x in {0,1,...,\DX}{
+        \foreach \y in {\DY,\DYminusone,...,0}{
+            \cubeview{\colorbyy{\y}}{\x}{\y}{\z}
+        }
+    }
+}
+
+
+\end{tikzpicture}
+
+
+
+
+\end{document}
