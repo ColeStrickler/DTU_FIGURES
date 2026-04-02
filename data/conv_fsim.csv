@@ -1,0 +1,4 @@
+benchmark,time
+im2col_cpu,28.580658
+im2col_dtu,28.366273
+naive,30.832307
