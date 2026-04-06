@@ -69,7 +69,7 @@ def label_total_bar(ax):
 def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     # Label x-axis with benchmark names
     ax.set_xticks(np.arange(len(pivot_mean))*x_axis_width_scale)
-    ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10)
+    ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10, fontweight="bold")
     ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
 
     ax.set_ylim(0.0, 4)         # set lower and upper limits
@@ -195,7 +195,7 @@ for ax, size in zip(axes, unique_sizes):
 
 
 
-plt.tight_layout(pad=2.0)
+plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 fig.legend(
     ["DTU", "CPU Base", "CPU Transform"],  # labels

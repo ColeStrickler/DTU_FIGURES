@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
 color_cpu       = "#F6B26B"  # light (analogous to #8FC8A9)
-color_transform = "#E69138"  # mid   (analogous to #5A9E78)
+color_inplace = "#E69138"  # mid   (analogous to #5A9E78)
 color_dtu       = "#B45F06"  # dark  (analogous to #356B45)
 
 
@@ -141,7 +141,14 @@ for ax, size in zip(axes, unique_sizes):
     
    # print(grouped)
 
-   # print(grouped)
+        pivot_mean = grouped.pivot(index="benchmark", columns="type", values="dtubw_mean")
+    pivot_std  = grouped.pivot(index="benchmark", columns="type", values="bw_mean")
+
+
+    pivot_mean["base_cpu"] = 1.0 
+    pivot_mean["base_col"] = pivot_std["col"] / pivot_std["cpu"] 
+
+    pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
 
 
         # pivot so the type column is separated into dtu+cpu
@@ -153,30 +160,20 @@ for ax, size in zip(axes, unique_sizes):
     #print(pivot_std)
     #print(transform_mean)
 
-    # Fraction of CPU spent on transform vs base execution
-    pivot_mean["transform_n"] = transform_mean["cpu"] / pivot_mean["cpu"]  # transform fraction
-    pivot_mean["base_cpu"] = (1.0 - pivot_mean["transform_n"]) * (pivot_mean["cpu"] / pivot_mean["dtu"])               # remaining execution
-    pivot_mean["transform_norm"] = pivot_mean["transform_n"] * (pivot_mean["cpu"] / pivot_mean["dtu"])
-    pivot_mean["total"] = pivot_mean["base_cpu"] + pivot_mean["transform_norm"]
-    #print(pivot_mean)
-    #print( (pivot_mean["cpu"] / pivot_mean["dtu"])  )
-    pivot_mean["dtu"] = 1.0
-
     # Keep the benchmark order sorted by mode
     benchmark_order = sub_df.groupby("benchmark")["Columns"].mean().sort_values().index
 
     # Reindex pivot_mean so rows are in this order
     pivot_mean = pivot_mean.reindex(benchmark_order)
     pivot_std  = pivot_std.reindex(benchmark_order)
-    transform_mean = transform_mean.reindex(benchmark_order)
-    
+
    #ax.set_yscale("log", base=2)
     x = np.arange(len(pivot_mean))# *x_axis_width_scale  # numeric positions for each benchmark
 
 
         # CPU stacked bars
     ax.bar(
-        x + bar_width/2, 
+        x + bar_width, 
         pivot_mean["base_cpu"], 
         width=bar_width, 
         color=color_cpu,
@@ -184,9 +181,21 @@ for ax, size in zip(axes, unique_sizes):
         label="CPU Base"
     )
 
+    ax.bar(
+        x,
+        pivot_mean["base_col"],
+        width=bar_width,
+        color=color_inplace,
+        edgecolor=edge,
+        label="Column"
+    )
+    
+
+
+
     # DTU bar (always 1)
     ax.bar(
-        x - bar_width/2,
+        x - bar_width,
         pivot_mean["dtu"],
         width=bar_width,
         color=color_dtu,
@@ -207,7 +216,7 @@ for ax, size in zip(axes, unique_sizes):
 plt.tight_layout(pad=2.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 fig.legend(
-    [ "DTU", "CPU Base" ],  # labels
+    [ "DTU", "Row", "Col" ],  # labels
     loc="upper center",                   # position above all subplots
     ncol=4,                               # spread horizontally
     fontsize=10,
@@ -227,6 +236,6 @@ fig.text(
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
 
-plt.savefig("figures/dbproj_boom.png", bbox_inches="tight")
-plt.savefig("figures/dbproj_boom.pdf", bbox_inches="tight")
+plt.savefig("figures/dbproj_bw_boom.png", bbox_inches="tight")
+plt.savefig("figures/dbproj_bw_boom.pdf", bbox_inches="tight")
 plt.show()

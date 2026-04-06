@@ -3,9 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       =         "#DAA1AC"
-color_transform =         "#cd808c"
-color_dtu       =         "#bc5566" 
+color_cpu       = "#E07ABF"   # Main magenta (bright but soft)
+color_transform = "#C15A9F"   # Mid-tone magenta
+color_dtu       = "#9C3F7D"   # Darker magenta
+# Greens 
+# color_cpu       =         "#8FC8A9"
+# color_transform =         "#5A9E78"
+# color_dtu       =         "#356B45" 
+
 edge = "#2a2a2a"
 
 bar_width = 0.1
@@ -18,7 +23,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/img_augmentation_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/vol2col_boom1.0.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -27,34 +32,38 @@ df["type"] = df["type"].str.strip()
 # -----------------------------
 # Extract image size
 # -----------------------------
-sizes = df["benchmark"].str.extract(r'img_augmentation_(\d+)_')[0]
-batch_size = df["benchmark"].str.extract(r'img_augmentation_(\d+)_(\d+)')[1]
-#print(batch_size)
-df["img_size"] = sizes + "x" + sizes
-df["img_size_num"] = sizes.astype(int)
+sizes =  df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[0] + "x" +  df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[1] + "x" + df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[2]     
+                    
+batch_size = df["benchmark"].str.extract(r'vol2col_k(\d+)')[0]
+
+print(batch_size)
+df["img_size"] = sizes
+
 df["batch_size"] = batch_size.astype(int)
 #print(df["batch_size"])
 # ---------------------
 
-
-unique_sizes = sorted(df["img_size_num"].unique())
+print("here\n")
+unique_sizes = sorted(df["img_size"].unique())
 #print(unique_sizes)
 
 
-
-def label_bar(ax, bar_num):
-    i = 0
-    for container in ax.containers:  # each stack in the bar plot
-        if i == bar_num:
-            for bar in container:
-                height = bar.get_height()  # actual height of the bar
-                ax.text(
-                    bar.get_x() + bar.get_width() / 2,  # center x
-                    height * 1.02,                     # slightly above the bar
-                    f"{height:.2f}",                   # show value
-                    ha='center', va='bottom', fontsize=8
-                )
-        i += 1
+def label_total_bar(ax):
+    # assume CPU stacked bars are the first two containers
+    cpu_containers = ax.containers[:2]  # base + transform
+    n_bars = len(cpu_containers[0])
+    
+    for i in range(n_bars):
+        total_height = sum(container[i].get_height() for container in cpu_containers)
+        x = cpu_containers[0][i].get_x() + cpu_containers[0][i].get_width()/2
+        ax.text(
+            x,
+            total_height * 1.02,
+            f"{total_height:.2f}",
+            ha='center',
+            va='bottom',
+            fontsize=8
+        )
 
 
 def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
@@ -63,14 +72,14 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10, fontweight="bold")
     ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
 
-    ax.set_ylim(0.0, 128)         # set lower and upper limits
+    ax.set_ylim(0.0, 4)         # set lower and upper limits
 
     # Define ticks you want explicitly
-    ax.set_yticks([0.5, 1, 2, 4, 8, 16, 32, 64, 128])
+    ax.set_yticks([1, 2, 3, 4,5,6])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
-    ax.set_title(f"Image size {size}x{size}", fontsize=12, fontweight="bold")
+    ax.set_title(f"Volume size {size}", fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -102,7 +111,7 @@ if len(unique_sizes) == 1:
 i = 0
 for ax, size in zip(axes, unique_sizes):
     # Select only rows for this image size
-    sub_df = df[df["img_size_num"] == size]
+    sub_df = df[df["img_size"] == size]
 
 
     # Aggregate per benchmark + type
@@ -113,7 +122,9 @@ for ax, size in zip(axes, unique_sizes):
     transform_std=("transform_cost", "std")
     ).reset_index() # make back into normal data frame
 
-    print(grouped)
+
+
+   # print(grouped)
 
 
         # pivot so the type column is separated into dtu+cpu
@@ -129,6 +140,9 @@ for ax, size in zip(axes, unique_sizes):
     pivot_mean["transform_n"] = transform_mean["cpu"] / pivot_mean["cpu"]  # transform fraction
     pivot_mean["base_cpu"] = (1.0 - pivot_mean["transform_n"]) * (pivot_mean["cpu"] / pivot_mean["dtu"])               # remaining execution
     pivot_mean["transform_norm"] = pivot_mean["transform_n"] * (pivot_mean["cpu"] / pivot_mean["dtu"])
+    pivot_mean["total"] = pivot_mean["base_cpu"] + pivot_mean["transform_norm"]
+    print(pivot_mean)
+    print( (pivot_mean["cpu"] / pivot_mean["dtu"])  )
     pivot_mean["dtu"] = 1.0
 
     # Keep the benchmark order sorted by batch_size
@@ -139,7 +153,7 @@ for ax, size in zip(axes, unique_sizes):
     pivot_std  = pivot_std.reindex(benchmark_order)
     transform_mean = transform_mean.reindex(benchmark_order)
     ax.axhline(1.0, color="black", linewidth=1.5, linestyle="--")
-    ax.set_yscale("log", base=2)
+    #ax.set_yscale("log", base=2)
     x = np.arange(len(pivot_mean))*x_axis_width_scale  # numeric positions for each benchmark
 
 
@@ -175,8 +189,8 @@ for ax, size in zip(axes, unique_sizes):
     batch_labels = sub_df.groupby("benchmark")["batch_size"].mean().loc[benchmark_order].astype(int)
 
 
-    plot_ax(ax, pivot_mean, batch_labels, "Batch Size", "Normalized Exec. Time")
-    label_bar(ax, 1)
+    plot_ax(ax, pivot_mean, batch_labels, "Kernel Size", "Normalized Exec. Time")
+    label_total_bar(ax)
     
 
 
@@ -204,6 +218,6 @@ fig.text(
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
 
-plt.savefig("figures/imgAug_boom.png", bbox_inches="tight")
-plt.savefig("figures/imgAug_boom.pdf", bbox_inches="tight")
+plt.savefig("figures/vol2col_boom.png", bbox_inches="tight")
+plt.savefig("figures/vol2col_boom.pdf", bbox_inches="tight")
 plt.show()
