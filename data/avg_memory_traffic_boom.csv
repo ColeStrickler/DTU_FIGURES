@@ -1,0 +1,11 @@
+benchmark,type,memtraffic
+im2col,dtu,1.413067735082039
+im2col,cpu,1.0
+dbproj,dtu,0.8761631843071022
+dbproj,cpu,1.0
+unfold,dtu,0.8614576495662928
+unfold,cpu,1.0
+vol2col,dtu,0.5163900908836482
+vol2col,cpu,1.0
+slicing,dtu,0.8238626604695998
+slicing,cpu,1.0

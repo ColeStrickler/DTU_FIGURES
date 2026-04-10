@@ -111,6 +111,8 @@ fig, axes = plt.subplots(
 if len(unique_sizes) == 1:
     axes = [axes]
 
+
+total_for_savings = 0
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 for ax, size in zip(axes, unique_sizes):
@@ -146,6 +148,8 @@ for ax, size in zip(axes, unique_sizes):
 
     pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
     pivot_mean["base_inplace"] = (pivot_std["inplace"]) / pivot_std["cpu"] 
+
+    total_for_savings += pivot_mean["base_dtu"].mean()
     print(pivot_std)
     print("\n\n")
     print(pivot_mean)
@@ -221,6 +225,28 @@ fig.text(
 #fig.get_yaxis().set_major_formatter(plt.ScalarFormatter())
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
+
+total_for_savings /= len(unique_sizes)
+total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
+
+dtu_row = {
+    "benchmark" : "slicing",
+    "type": "dtu",
+    "memtraffic": total_for_savings
+}
+
+cpu_row = {
+    "benchmark" : "slicing",
+    "type": "cpu",
+    "memtraffic": 1.0
+}
+
+
+# Append
+total_df = pd.concat([total_df, pd.DataFrame([dtu_row, cpu_row])], ignore_index=True)
+
+# Save back
+total_df.to_csv("data/avg_memory_traffic_boom.csv", index=False)
 
 plt.savefig("figures/slicing_bw_boom.png", bbox_inches="tight")
 plt.savefig("figures/slicing_bw_boom.pdf", bbox_inches="tight")

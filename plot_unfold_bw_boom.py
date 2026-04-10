@@ -125,7 +125,7 @@ fig, axes = plt.subplots(
 # Step 3: if only one size, axes is not a list, so wrap it
 if len(unique_sizes) == 1:
     axes = [axes]
-
+total_for_savings = 0
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 for ax, size in zip(axes, unique_sizes):
@@ -160,7 +160,7 @@ for ax, size in zip(axes, unique_sizes):
     pivot_mean["base_cpu"] = 1.0 
 
     pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
-
+    total_for_savings += pivot_mean["base_dtu"].mean()
     # Keep the benchmark order sorted by batch_size
     benchmark_order = sub_df.groupby("benchmark")["mode"].mean().sort_values().index
 
@@ -221,6 +221,30 @@ fig.text(
 #fig.set_yticks([1, 2, 4, 8, 16, 32,64,128])
 #fig.get_yaxis().set_major_formatter(plt.ScalarFormatter())
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
+total_for_savings /= len(unique_sizes)
+total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
+
+dtu_row = {
+    "benchmark" : "unfold",
+    "type": "dtu",
+    "memtraffic": total_for_savings
+}
+
+cpu_row = {
+    "benchmark" : "unfold",
+    "type": "cpu",
+    "memtraffic": 1.0
+}
+
+
+# Append
+total_df = pd.concat([total_df, pd.DataFrame([dtu_row, cpu_row])], ignore_index=True)
+
+# Save back
+total_df.to_csv("data/avg_memory_traffic_boom.csv", index=False)
+
+
+
 
 
 plt.savefig("figures/unfold_bw_boom.png", bbox_inches="tight")
