@@ -25,7 +25,8 @@ def unfold():
 
 
 
-
+def vol2col_size(cin,height,width,depth,ksize):
+    return cin*(height-ksize+1)*(width-ksize+1)*(depth-ksize+1)*ksize*ksize*ksize
 
 
 def im2col_matsize(cin, height, width, ksize):
@@ -39,6 +40,10 @@ def im2col_usage(cin,height,width,ksize):
     return base_imgsize(3,256,256) / im2col_matsize(3,256,256,ksize)
 def im2col_usage2(cin,height,width,ksize):
     return  im2col_matsize(3,256,256,ksize) / base_imgsize(3,256,256)
+
+
+def vol2col_usage(cin,height,width,depth,ksize):
+        return vol2col_size(cin,height,width,depth,ksize) / (cin*height*width*depth)
 
 
 def img_aug2():
@@ -125,7 +130,7 @@ data.append({
 
 
 for ksize in [2,3,4,5]:
-    ratio = im2col_usage2(3,256,256,ksize)
+    ratio = im2col_usage2(3,512,512,ksize)
     data.append({
         "benchmark": f"Im2Col_{ksize}x{ksize}",
         "memory usage": 1.0,
@@ -136,6 +141,21 @@ for ksize in [2,3,4,5]:
         "memory usage": ratio,
         "type": "base"
     })
+
+
+for ksize in [2,3,4]:
+    ratio = vol2col_usage(3,128,128,16,ksize)
+    data.append({
+        "benchmark": f"Vol2Col_k{ksize}",
+        "memory usage": 1.0,
+        "type": "savings"
+    })
+    data.append({
+        "benchmark": f"Vol2Col_k{ksize}",
+        "memory usage": ratio,
+        "type": "base"
+    })
+
 
 
 
@@ -181,14 +201,14 @@ fig.legend(
     frameon=False                         # optional: no box around legend
 )
 
-ax.set_ylim(0.1,32)
+ax.set_ylim(0.1,64)
 # Set y-axis to logarithmic scale
 ax.set_yscale('log', base=2)
 
 # Optional: customize the ticks (base 10)
 ax.yaxis.set_major_locator(LogLocator(base=2, subs=None, numticks=6))
 ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific notation
-ax.set_yticks([0.5, 1, 2, 4, 8, 16, 32])
+ax.set_yticks([0.5, 1, 2, 4, 8, 16, 32, 64])
 for label in ax.get_yticklabels():
     label.set_fontweight('bold')
     label.set_fontsize(10)

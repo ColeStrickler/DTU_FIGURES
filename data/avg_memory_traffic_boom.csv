@@ -9,3 +9,5 @@ vol2col,dtu,0.5163900908836482
 vol2col,cpu,1.0
 slicing,dtu,0.8238626604695998
 slicing,cpu,1.0
+img_augmentation,dtu,1.125144554647613
+img_augmentation,cpu,1.0
