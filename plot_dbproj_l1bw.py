@@ -3,10 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       =         "#8FC8A9"
-color_transform =         "#5A9E78"
-color_dtu       =         "#356B45" 
-color_inplace   =         "#4A7F6A"
+color_cpu       = "#E07ABF"   # Main magenta (bright but soft)
+color_transform = "#C15A9F"   # Mid-tone magenta
+color_dtu       = "#9C3F7D"   # Darker magenta
 # Greens 
 # color_cpu       =         "#8FC8A9"
 # color_transform =         "#5A9E78"
@@ -14,7 +13,7 @@ color_inplace   =         "#4A7F6A"
 
 edge = "#2a2a2a"
 
-bar_width = 0.08
+bar_width = 0.1
 x_axis_width_scale = 0.25
 fig_height_scale = 3
 fig_width_scale = 4
@@ -24,31 +23,51 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/slicing2_boom1.0.csv", skipinitialspace=True)
-print(df)
+df = pd.read_csv("data/dbproj2_boom1.0.csv", skipinitialspace=True)
+
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
 df["type"] = df["type"].str.strip()
 
 # -----------------------------
 # Extract image size
+
+mode = df["benchmark"].str.extract(r'tensor_unfold_(\d+)')[0]
+
+tensor_sizes = df["benchmark"].str.extract(r'tensor_unfold_(\d+)_(\d+)')[1]
+mapping  = {
+    8: "16MB",
+    32: "64MB",
+}
+tensor_sizes = tensor_sizes.map(mapping).fillna(tensor_sizes)
+
 # -----------------------------
-# -----------------------------
+#sizes =  df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[0] + "x" +  df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[1] + "x" + df["benchmark"].str.extract(r'_(\d+)x(\d+)x(\d+)$')[2]     
+                    
+#batch_size = df["benchmark"].str.extract(r'vol2col_k(\d+)')[0]
 
-stride = df["benchmark"].str.extract(r'x(\d+)$')[0]
+sizes = df["benchmark"].str.extract(r'_(\d+)$')[0]
+#print(sizes)
+df["row_size"] = sizes
 
-stride_sizes = df["benchmark"].str.extract(r'(\d+)x(\d+)$')[0]
 
-df["stride2_size"] = stride_sizes
-df["img_size"] = "512x64x64x8"
-
-df["stride"] = stride.astype(int)
-#print(df["stride"])
+mode = df["benchmark"].str.extract(r'_(\d+)_(\d+)$')[0]
+df["Columns"] = mode.astype(int)
+#print(df["mode"])
 # ---------------------
 
+unique_sizes = sorted(df["row_size"].unique())
+unique_sizes.reverse()
+print(unique_sizes)
 
-unique_sizes = sorted(df["stride2_size"].unique())
-#print(unique_sizes)
+
+
+#print(batch_size)
+#df["img_size"] = sizes
+
+#df["batch_size"] = batch_size.astype(int)
+#print(df["batch_size"])
+# ---------------------
 
 
 
@@ -76,14 +95,14 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10, fontweight="bold")
     ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
 
-    ax.set_ylim(0.0, 1.5)         # set lower and upper limits
+    ax.set_ylim(0.0, 4)         # set lower and upper limits
 
     # Define ticks you want explicitly
-    ax.set_yticks([1, 2])
+    ax.set_yticks([1, 2, 3, 4,5,6])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
-    ax.set_title(f"Slicing Total Memory Accesses {size}", fontsize=12, fontweight="bold")
+    ax.set_title(f"ColProj DRAM Accesses - {size}", fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -97,7 +116,7 @@ def hatch_ax(ax):
             for bar in container:
                 bar.set_hatch('//')
 
-
+total_for_savings = 0
 
 
 # Step 2: create a subplot for each image size, sharing the y-axis
@@ -107,22 +126,23 @@ fig, axes = plt.subplots(
     sharey=True                # this is the shared y-axis
 )
 
-# Step 3: if only one size, axes is not a list, so wrap it
-if len(unique_sizes) == 1:
-    axes = [axes]
-
 
 l1refill_avg = 0
 l1wb_avg  = 0
 llcwb_avg = 0
 llcrefill_avg  = 0
 
-total_for_savings = 0
+
+
+# Step 3: if only one size, axes is not a list, so wrap it
+if len(unique_sizes) == 1:
+    axes = [axes]
+
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 for ax, size in zip(axes, unique_sizes):
     # Select only rows for this image size
-    sub_df = df[df["stride2_size"] == size]
+    sub_df = df[df["row_size"] == size]
 
 
     # Aggregate per benchmark + type
@@ -159,6 +179,9 @@ for ax, size in zip(axes, unique_sizes):
     l1refill_avg    += pivot_l1refill["avg"].mean()
     llcwb_avg       += pivot_llcwb["avg"].mean()
     llcrefill_avg   += pivot_llcrefill["avg"].mean()
+
+
+    
    # transform_mean = grouped.pivot(index="benchmark", columns="type", values="transform_mean")
 
     #print(pivot_mean)
@@ -169,17 +192,17 @@ for ax, size in zip(axes, unique_sizes):
     
 
     pivot_mean["base_cpu"] = 1.0 
-
+    
     pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
-    pivot_mean["base_inplace"] = (pivot_std["inplace"]) / pivot_std["cpu"] 
+
+    pivot_mean["base_col"] = (pivot_std["col"] / pivot_std["cpu"])
+
+ 
+
 
     total_for_savings += pivot_mean["base_dtu"].mean()
-    print(pivot_std)
-    print("\n\n")
-    print(pivot_mean)
-
     # Keep the benchmark order sorted by batch_size
-    benchmark_order = sub_df.groupby("benchmark")["stride"].mean().sort_values().index
+    benchmark_order = sub_df.groupby("benchmark")["Columns"].mean().sort_values().index
 
     # Reindex pivot_mean so rows are in this order
     pivot_mean = pivot_mean.reindex(benchmark_order)
@@ -192,7 +215,7 @@ for ax, size in zip(axes, unique_sizes):
 
     # CPU stacked bars
     ax.bar(
-        x + bar_width, 
+        x + bar_width/2, 
         pivot_mean["base_cpu"], 
         width=bar_width, 
         color=color_cpu,
@@ -200,28 +223,30 @@ for ax, size in zip(axes, unique_sizes):
         label="CPU Base"
     )
 
-    ax.bar(
-        x,
-        pivot_mean["base_inplace"], 
-        width=bar_width, 
-        color=color_inplace,
-        edgecolor=edge,
-        label="In Place"
-    )
+
+            # CPU stacked bars
+    #ax.bar(
+    #    x , 
+    #    pivot_mean["base_col"], 
+    #    width=0.5*bar_width, 
+    #    color="black",
+    #    edgecolor=edge,
+    #    label="CPU Base"
+    #)
 
     # DTU bar (always 1)
     ax.bar(
-        x - bar_width,
+        x - bar_width/2,
         pivot_mean["base_dtu"],
         width=bar_width,
         color=color_dtu,
         edgecolor=edge,
         label="DTU"
     )
-    batch_labels = sub_df.groupby("benchmark")["stride"].mean().loc[benchmark_order].astype(int)
+    batch_labels = sub_df.groupby("benchmark")["Columns"].mean().loc[benchmark_order].astype(int)
 
 
-    plot_ax(ax, pivot_mean, batch_labels, "Element Stride", "Normalized # DRAM Accesses")
+    plot_ax(ax, pivot_mean, batch_labels, "Columns projected", "Normalized # DRAM Accesses")
     label_total_bar(ax)
     
 
@@ -230,7 +255,7 @@ for ax, size in zip(axes, unique_sizes):
 plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 fig.legend(
-    [ "CPU", "CPU", "In Place", "DTU" ],  # labels
+    ["CPU", "CPU", "DTU"],  # labels
     loc="upper center",                   # position above all subplots
     ncol=3,                               # spread horizontally
     fontsize=10,
@@ -249,6 +274,7 @@ fig.text(
 #fig.get_yaxis().set_major_formatter(plt.ScalarFormatter())
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
+
 l1refill_avg /= len(unique_sizes)
 l1wb_avg /= len(unique_sizes)
 llcwb_avg /= len(unique_sizes)
@@ -260,7 +286,7 @@ total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
 
 total_for_savings /= len(unique_sizes)
 dtu_update = {
-    "benchmark" : "slicing",
+    "benchmark" : "dbproj",
     "type": "dtu",
     "L1Refill": l1refill_avg,
     "L1WB": l1wb_avg,
@@ -270,7 +296,7 @@ dtu_update = {
 }
 
 cpu_update = {
-    "benchmark" : "slicing",
+    "benchmark" : "dbproj",
     "type": "cpu",
     "L1Refill":1.0,
     "L1WB": 1.0,
@@ -278,6 +304,7 @@ cpu_update = {
     "LLCWB": 1.0,
     "memtraffic": 1.0
 }
+
 
 
 def upsert_row(df, row, key_cols=("benchmark", "type")):
@@ -306,6 +333,3 @@ df.to_csv("data/avg_memory_traffic_boom.csv", index=False)
 
 
 
-plt.savefig("figures/slicing_bw_boom.png", bbox_inches="tight")
-plt.savefig("figures/slicing_bw_boom.pdf", bbox_inches="tight")
-plt.show()

@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       = "#F6B26B"  # light (analogous to #8FC8A9)
-color_transform = "#E69138"  # mid   (analogous to #5A9E78)
-color_dtu       = "#B45F06"  # dark  (analogous to #356B45)
+color_cpu       =         "#7FAFD4"
+color_transform =         "#5588AA"
+color_dtu       =         "#345670" 
 
 
 # Greens 
@@ -85,14 +85,14 @@ def label_total_bar(ax):
 
 def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     # Label x-axis with benchmark names
-    ax.set_xticks(np.arange(len(pivot_mean)))
+    ax.set_xticks(np.arange(len(pivot_mean)) * x_axis_width_scale)
     ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10, fontweight="bold")
     ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
 
     ax.set_ylim(0.0, 6.5)         # set lower and upper limits
 
     # Define ticks you want explicitly
-    ax.set_yticks([0.5, 1, 2, 3, 4,5,6])
+    ax.set_yticks([1, 2, 3, 4,5,6])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
@@ -178,7 +178,7 @@ for ax, size in zip(axes, unique_sizes):
     transform_mean = transform_mean.reindex(benchmark_order)
     
    #ax.set_yscale("log", base=2)
-    x = np.arange(len(pivot_mean))# *x_axis_width_scale  # numeric positions for each benchmark
+    x = np.arange(len(pivot_mean)) * x_axis_width_scale
 
 
         # CPU stacked bars
@@ -221,15 +221,21 @@ for ax, size in zip(axes, unique_sizes):
     ax.axhline(1.0, color="black", linewidth=1.5, linestyle="--")
 
 
-plt.tight_layout(pad=3.0)
-#fig.subplots_adjust(right=0.85)  # leave space for legend on right
+
+handles = ax.containers  # bar containers only
+labels = ["CPU Base", "CPU Transform", "DTU"]
 fig.legend(
-    [ "DTU", "CPU Base", "CPU Transform" ],  # labels
-    loc="upper center",                   # position above all subplots
-    ncol=4,                               # spread horizontally
-    fontsize=10,
-    frameon=False                         # optional: no box around legend
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=3,
 )
+
+
+plt.tight_layout(pad=2.0)
+#fig.subplots_adjust(right=0.85)  # leave space for legend on right
+
 fig.text(
     0.02,      # x position (slightly left of the figure)
     0.55,       # y position (centered vertically)

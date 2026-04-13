@@ -6,6 +6,8 @@ from matplotlib.ticker import LogLocator, ScalarFormatter
 color_cpu       =         "#DAA1AC"
 color_transform =         "#cd808c"
 color_dtu       =         "#bc5566" 
+
+
 edge = "#2a2a2a"
 
 bar_width = 0.1
@@ -66,7 +68,7 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     ax.set_ylim(0.0, 128)         # set lower and upper limits
 
     # Define ticks you want explicitly
-    ax.set_yticks([0.5, 1, 2, 4, 8, 16, 32, 64, 128])
+    ax.set_yticks([0.1, 0.5, 1, 2, 4, 8, 16, 32, 64, 128])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
@@ -83,6 +85,7 @@ def hatch_ax(ax):
         if i == 1:  # second stack (transform)
             for bar in container:
                 bar.set_hatch('//')
+        
 
 
 
@@ -181,15 +184,18 @@ for ax, size in zip(axes, unique_sizes):
 
 
 
-plt.tight_layout(pad=3.0)
+plt.tight_layout(pad=2.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
+handles = ax.containers  # bar containers only
+labels = ["CPU Base", "CPU Transform", "DTU"]
 fig.legend(
-    ["DTU", "CPU Base", "CPU Transform"],  # labels
-    loc="upper center",                   # position above all subplots
-    ncol=3,                               # spread horizontally
-    fontsize=10,
-    frameon=False                         # optional: no box around legend
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=3,
 )
+
 fig.text(
     0.02,      # x position (slightly left of the figure)
     0.55,       # y position (centered vertically)

@@ -3,9 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       =         "#7FAFD4"
-color_transform =         "#5588AA"
-color_dtu       =         "#345670" 
+color_cpu       =         "#DAA1AC"
+color_transform =         "#cd808c"
+color_dtu       =         "#bc5566" 
 
 # Greens 
 # color_cpu       =         "#8FC8A9"
@@ -75,7 +75,7 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     ax.set_ylim(0.0, 4)         # set lower and upper limits
 
     # Define ticks you want explicitly
-    ax.set_yticks([0.5, 1, 2, 4])
+    ax.set_yticks([1, 2, 3, 4])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
@@ -153,7 +153,7 @@ for ax, size in zip(axes, unique_sizes):
     pivot_std  = pivot_std.reindex(benchmark_order)
     transform_mean = transform_mean.reindex(benchmark_order)
     ax.axhline(1.0, color="black", linewidth=1.5, linestyle="--")
-    ax.set_yscale("log", base=2)
+    #ax.set_yscale("log", base=2)
     x = np.arange(len(pivot_mean))*x_axis_width_scale  # numeric positions for each benchmark
 
 
@@ -195,15 +195,18 @@ for ax, size in zip(axes, unique_sizes):
 
 
 
-plt.tight_layout(pad=3.0)
+plt.tight_layout(pad=2.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
+handles = ax.containers  # bar containers only
+labels = ["CPU Base", "CPU Transform", "DTU"]
 fig.legend(
-    ["DTU", "CPU Base", "CPU Transform"],  # labels
-    loc="upper center",                   # position above all subplots
-    ncol=3,                               # spread horizontally
-    fontsize=10,
-    frameon=False                         # optional: no box around legend
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=3,
 )
+
 fig.text(
     0.02,      # x position (slightly left of the figure)
     0.55,       # y position (centered vertically)

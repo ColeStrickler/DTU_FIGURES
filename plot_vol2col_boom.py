@@ -3,9 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       = "#E07ABF"   # Main magenta (bright but soft)
-color_transform = "#C15A9F"   # Mid-tone magenta
-color_dtu       = "#9C3F7D"   # Darker magenta
+color_cpu       =         "#7FAFD4"
+color_transform =         "#5588AA"
+color_dtu       =         "#345670" 
+
 # Greens 
 # color_cpu       =         "#8FC8A9"
 # color_transform =         "#5A9E78"
@@ -13,7 +14,7 @@ color_dtu       = "#9C3F7D"   # Darker magenta
 
 edge = "#2a2a2a"
 
-bar_width = 0.1
+bar_width = 0.07
 x_axis_width_scale = 0.25
 fig_height_scale = 3
 fig_width_scale = 4
@@ -70,16 +71,16 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     # Label x-axis with benchmark names
     ax.set_xticks(np.arange(len(pivot_mean))*x_axis_width_scale)
     ax.set_xticklabels(index, rotation=45, ha="right", fontsize=10, fontweight="bold")
-    ax.set_xlabel(xlabel, fontsize=12, fontweight="bold")
+    ax.set_xlabel(xlabel, fontsize=10, fontweight="bold")
 
-    ax.set_ylim(0.0, 4)         # set lower and upper limits
+    ax.set_ylim(0.0, 7)         # set lower and upper limits
 
     # Define ticks you want explicitly
     ax.set_yticks([1, 2, 3, 4,5,6])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
-    ax.set_title(f"Volume size {size}", fontsize=12, fontweight="bold")
+    ax.set_title(f"Volume size {size}", fontsize=10, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -99,7 +100,7 @@ def hatch_ax(ax):
 # Step 2: create a subplot for each image size, sharing the y-axis
 fig, axes = plt.subplots(
     1, len(unique_sizes),      # one row, multiple columns
-    figsize=(fig_width_scale * len(unique_sizes), fig_height_scale),
+    figsize=(6.3, 2.7),
     sharey=True                # this is the shared y-axis
 )
 
@@ -195,24 +196,30 @@ for ax, size in zip(axes, unique_sizes):
 
 
 
-plt.tight_layout(pad=3.0)
+plt.tight_layout(pad=1.4)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
-fig.legend(
-    ["DTU", "CPU Base", "CPU Transform"],  # labels
-    loc="upper center",                   # position above all subplots
-    ncol=3,                               # spread horizontally
-    fontsize=10,
-    frameon=False                         # optional: no box around legend
+handles = ax.containers  # bar containers only
+labels = ["CPU Base", "CPU Transform", "DTU"]
+ax.legend(
+    handles,
+    labels,
+    loc="upper right",
+    bbox_to_anchor=(0.5, 1.0),
+    ncol=3,
+    fontsize=7,
 )
+
 fig.text(
     0.02,      # x position (slightly left of the figure)
     0.55,       # y position (centered vertically)
     "Normalized Exec. Time",
     va='center', ha='center',
     rotation='vertical',
-    fontsize=12,
+    fontsize=8,
     fontweight='bold'
 )
+
+
 #fig.set_yticks([1, 2, 4, 8, 16, 32,64,128])
 #fig.get_yaxis().set_major_formatter(plt.ScalarFormatter())
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")

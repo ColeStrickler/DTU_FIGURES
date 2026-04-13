@@ -112,6 +112,12 @@ if len(unique_sizes) == 1:
 
 total_for_savings = 0
 
+l1refill_avg = 0
+l1wb_avg  = 0
+llcwb_avg = 0
+llcrefill_avg  = 0
+
+
 
 
 #print(axes)  # just to check we have the correct axes objects
@@ -121,21 +127,40 @@ for ax, size in zip(axes, unique_sizes):
     sub_df = df[df["img_size"] == size]
 
 
-    # Aggregate per benchmark + type
+  # Aggregate per benchmark + type
     grouped = sub_df.groupby(["benchmark", "type"]).agg( # combine rows for the same benchmark and type (CPU or DTU).
     bw_mean=("RegularDRAMAccess", "mean"), # calculate mean and standard deviation for cycle and transform_cost.
     dtubw_mean=("DTUDramAccess", "mean"),
+    l1wb_mean=("L1WB", "mean"), # calculate mean and standard deviation for cycle and transform_cost.
+    l1refill_mean=("L1Refill", "mean"),
+    llcwb_mean=("LLCWB", "mean"), # calculate mean and standard deviation for cycle and transform_cost.
+    llcrefill_mean=("LLCRefill", "mean"),
     cycle_std=("cycle", "std"),
     transform_mean=("transform_cost", "mean"),
     transform_std=("transform_cost", "std")
     ).reset_index() # make back into normal data frame
 
-
+    #LLCRefill,LLCWB,L1Refill,L1WB
 
     # print(grouped)
     # pivot so the type column is separated into dtu+cpu
     pivot_mean = grouped.pivot(index="benchmark", columns="type", values="dtubw_mean")
     pivot_std  = grouped.pivot(index="benchmark", columns="type", values="bw_mean")
+
+    pivot_l1wb = grouped.pivot(index="benchmark", columns="type", values="l1wb_mean")
+    pivot_l1refill = grouped.pivot(index="benchmark", columns="type", values="l1refill_mean")
+    pivot_llcwb = grouped.pivot(index="benchmark", columns="type", values="llcwb_mean")
+    pivot_llcrefill = grouped.pivot(index="benchmark", columns="type", values="llcrefill_mean")
+    
+    pivot_l1wb["avg"] = pivot_l1wb["dtu"] / pivot_l1wb["cpu"] 
+    pivot_l1refill["avg"] = pivot_l1refill["dtu"] / pivot_l1refill["cpu"] 
+    pivot_llcwb["avg"] = pivot_llcwb["dtu"] / pivot_llcwb["cpu"] 
+    pivot_llcrefill["avg"] = pivot_llcrefill["dtu"] / pivot_llcrefill["cpu"] 
+
+    l1wb_avg        += pivot_l1wb["avg"].mean()
+    l1refill_avg    += pivot_l1refill["avg"].mean()
+    llcwb_avg       += pivot_llcwb["avg"].mean()
+    llcrefill_avg   += pivot_llcrefill["avg"].mean()
    # transform_mean = grouped.pivot(index="benchmark", columns="type", values="transform_mean")
 
     #print(pivot_mean)
@@ -218,28 +243,59 @@ fig.text(
 
 
 
+l1refill_avg /= len(unique_sizes)
+l1wb_avg /= len(unique_sizes)
+llcwb_avg /= len(unique_sizes)
+llcrefill_avg /= len(unique_sizes)
 
-total_for_savings /= len(unique_sizes)
+
+
 total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
-
-dtu_row = {
+total_for_savings /= len(unique_sizes)
+dtu_update = {
     "benchmark" : "im2col",
     "type": "dtu",
-    "memtraffic": total_for_savings
+    "L1Refill": l1refill_avg,
+    "L1WB": l1wb_avg,
+    "LLCRefill": llcrefill_avg,
+    "LLCWB": llcwb_avg,
+    "memtrafic": total_for_savings
 }
 
-cpu_row = {
+cpu_update = {
     "benchmark" : "im2col",
     "type": "cpu",
+    "L1Refill":1.0,
+    "L1WB": 1.0,
+    "LLCRefill": 1.0,
+    "LLCWB": 1.0,
     "memtraffic": 1.0
 }
 
 
+def upsert_row(df, row, key_cols=("benchmark", "type")):
+    mask = (df[list(key_cols)] == pd.Series({k: row[k] for k in key_cols})).all(axis=1)
+
+    if mask.any():
+        # update only provided fields
+        for k, v in row.items():
+            if k not in key_cols:
+                df.loc[mask, k] = v
+    else:
+        # insert new row
+        df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+
+    return df
+
+df = upsert_row(total_df, dtu_update)
+df = upsert_row(df, cpu_update)
+
 # Append
-total_df = pd.concat([total_df, pd.DataFrame([dtu_row, cpu_row])], ignore_index=True)
+#total_df = pd.concat([total_df, pd.DataFrame([dtu_row, cpu_row])], ignore_index=True)
 
 # Save back
-total_df.to_csv("data/avg_memory_traffic_boom.csv", index=False)
+df.to_csv("data/avg_memory_traffic_boom.csv", index=False)
+
 
 
 

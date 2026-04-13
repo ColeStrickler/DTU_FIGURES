@@ -3,9 +3,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       = "#F6B26B"  # light (analogous to #8FC8A9)
-color_inplace = "#E69138"  # mid   (analogous to #5A9E78)
-color_dtu       = "#B45F06"  # dark  (analogous to #356B45)
+
+
+
+
+
+
+
+
+
+
+color_cpu       =         "#7FAFD4"
+color_inplace =         "#5588AA"
+color_dtu       =         "#345670" 
+
 
 
 # Greens 
@@ -141,14 +152,8 @@ for ax, size in zip(axes, unique_sizes):
     
    # print(grouped)
 
-        pivot_mean = grouped.pivot(index="benchmark", columns="type", values="dtubw_mean")
-    pivot_std  = grouped.pivot(index="benchmark", columns="type", values="bw_mean")
-
-
-    pivot_mean["base_cpu"] = 1.0 
-    pivot_mean["base_col"] = pivot_std["col"] / pivot_std["cpu"] 
-
-    pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
+    #pivot_mean = grouped.pivot(index="benchmark", columns="type", values="dtubw_mean")
+    #pivot_std  = grouped.pivot(index="benchmark", columns="type", values="bw_mean")
 
 
         # pivot so the type column is separated into dtu+cpu
@@ -156,7 +161,13 @@ for ax, size in zip(axes, unique_sizes):
     pivot_std  = grouped.pivot(index="benchmark", columns="type", values="cycle_std")
     transform_mean = grouped.pivot(index="benchmark", columns="type", values="transform_mean")
 
-    #print(pivot_mean)
+    pivot_mean["base_cpu"] = pivot_mean["cpu"] / pivot_mean["dtu"]
+    pivot_mean["base_col"] = pivot_mean["col"] / pivot_mean["dtu"] 
+
+    pivot_mean["base_dtu"] = 1.0
+
+
+    print(pivot_mean)
     #print(pivot_std)
     #print(transform_mean)
 
@@ -191,12 +202,10 @@ for ax, size in zip(axes, unique_sizes):
     )
     
 
-
-
     # DTU bar (always 1)
     ax.bar(
         x - bar_width,
-        pivot_mean["dtu"],
+        pivot_mean["base_dtu"],
         width=bar_width,
         color=color_dtu,
         edgecolor=edge,
@@ -215,13 +224,19 @@ for ax, size in zip(axes, unique_sizes):
 
 plt.tight_layout(pad=2.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
+
+
+handles = ax.containers  # bar containers only
+labels = ["Row", "Col", "DTU"]
 fig.legend(
-    [ "DTU", "Row", "Col" ],  # labels
-    loc="upper center",                   # position above all subplots
-    ncol=4,                               # spread horizontally
-    fontsize=10,
-    frameon=False                         # optional: no box around legend
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, 1.02),
+    ncol=3,
 )
+
+
 fig.text(
     0.02,      # x position (slightly left of the figure)
     0.55,       # y position (centered vertically)
@@ -236,6 +251,6 @@ fig.text(
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
 
-plt.savefig("figures/dbproj_bw_boom.png", bbox_inches="tight")
-plt.savefig("figures/dbproj_bw_boom.pdf", bbox_inches="tight")
+plt.savefig("figures/dbproj_boom.png", bbox_inches="tight")
+plt.savefig("figures/dbproj_boom.pdf", bbox_inches="tight")
 plt.show()
