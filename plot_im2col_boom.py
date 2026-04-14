@@ -24,7 +24,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/im2col_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/im2col_boom3.2.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -110,8 +110,7 @@ if len(unique_sizes) == 1:
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 for ax, size in zip(axes, unique_sizes):
-    if size != "720x1080":
-        continue
+
     print(size)
     # Select only rows for this image size
     sub_df = df[df["img_size"] == size]
