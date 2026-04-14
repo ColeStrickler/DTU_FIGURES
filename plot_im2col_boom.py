@@ -110,6 +110,9 @@ if len(unique_sizes) == 1:
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 for ax, size in zip(axes, unique_sizes):
+    if size != "720x1080":
+        continue
+    print(size)
     # Select only rows for this image size
     sub_df = df[df["img_size"] == size]
 

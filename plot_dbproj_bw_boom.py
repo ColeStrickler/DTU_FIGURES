@@ -3,9 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
-color_cpu       = "#E07ABF"   # Main magenta (bright but soft)
-color_transform = "#C15A9F"   # Mid-tone magenta
-color_dtu       = "#9C3F7D"   # Darker magenta
+color_cpu       = "#DAA1AC"   # Main magenta (bright but soft)
+color_transform = "#cd808c"   # Mid-tone magenta
+color_dtu       = "#bc5566"   # Darker magenta
+
 # Greens 
 # color_cpu       =         "#8FC8A9"
 # color_transform =         "#5A9E78"

@@ -32,6 +32,9 @@ def unfold():
 def vol2col_size(cin,height,width,depth,ksize):
     return cin*(height-ksize+1)*(width-ksize+1)*(depth-ksize+1)*ksize*ksize*ksize
 
+def vol2col_usage(cin,height,width,depth,ksize):
+        return vol2col_size(cin,height,width,depth,ksize) / (cin*height*width*depth)
+
 
 def im2col_matsize(cin, height, width, ksize):
     return cin * (height - ksize + 1) * (width - ksize + 1) * ksize * ksize 
@@ -45,9 +48,6 @@ def im2col_usage(cin,height,width,ksize):
 def im2col_usage2(cin,height,width,ksize):
     return  im2col_matsize(3,256,256,ksize) / base_imgsize(3,256,256)
 
-
-def vol2col_usage(cin,height,width,depth,ksize):
-        return vol2col_size(cin,height,width,depth,ksize) / (cin*height*width*depth)
 
 
 def img_aug2():
@@ -137,12 +137,12 @@ data.append({
 for ksize in [2,3,4,5]:
     ratio = im2col_usage2(3,512,512,ksize)
     data.append({
-        "benchmark": f"im2col_k{ksize}",
+        "benchmark": f"{ksize}",
         "memory usage": 1.0/ratio,
         "type": "savings"
     })
     data.append({
-        "benchmark": f"im2col_k{ksize}",
+        "benchmark": f"{ksize}",
         "memory usage": 1.0,
         "type": "base"
     })

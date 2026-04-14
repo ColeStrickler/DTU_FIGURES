@@ -12,10 +12,9 @@ from matplotlib.ticker import LogLocator, ScalarFormatter
 
 
 
-
-color_cpu       =         "#7FAFD4"
-color_inplace =         "#5588AA"
-color_dtu       =         "#345670" 
+color_cpu       = "#DAA1AC"   # Main magenta (bright but soft)
+color_inplace = "#cd808c"   # Mid-tone magenta
+color_dtu       = "#bc5566"   # Darker magenta
 
 
 
@@ -83,7 +82,7 @@ def label_total_bar(ax):
             f"{total_height:.2f}",
             ha='center',
             va='bottom',
-            fontsize=8
+            fontsize=10
         )
 
 
@@ -100,7 +99,7 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel):
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
-    ax.set_title(f"RowSize {int(size)*4} bytes", fontsize=12, fontweight="bold")
+    ax.set_title(f"RowSize {int(size)*4} bytes", fontsize=8, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -231,8 +230,8 @@ labels = ["Row", "Col", "DTU"]
 fig.legend(
     handles,
     labels,
-    loc="upper center",
-    bbox_to_anchor=(0.5, 1.02),
+    loc="lower center",
+    bbox_to_anchor=(0.5, -0.02),
     ncol=3,
 )
 
@@ -250,7 +249,14 @@ fig.text(
 #fig.get_yaxis().set_major_formatter(plt.ScalarFormatter())
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
-
+fig.text(
+    0.5, 0.93,
+    "DTU vs. CPU Execution Time",
+    va='bottom',
+    ha='center',
+    fontsize=14,
+    fontweight='bold'
+)
 plt.savefig("figures/dbproj_boom.png", bbox_inches="tight")
 plt.savefig("figures/dbproj_boom.pdf", bbox_inches="tight")
 plt.show()
