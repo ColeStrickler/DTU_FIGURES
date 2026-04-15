@@ -20,7 +20,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/img_augmentation_boom3.2.csv", skipinitialspace=True)
+df = pd.read_csv("data/img_augmentation_boom1.0.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()

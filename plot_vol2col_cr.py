@@ -36,7 +36,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/vol2col_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/vol2col_boom3.2.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -63,12 +63,12 @@ unique_sizes = sorted(df["img_size"].unique())
 
 def label_total_bar(ax):
     # assume CPU stacked bars are the first two containers
-    cpu_containers = ax.containers[:2]  # base + transform
-    n_bars = len(cpu_containers[0])
+    cpu_containers = ax.containers[-2:]  # base + transform
+    n_bars = len(cpu_containers[1])
     
     for i in range(n_bars):
         total_height = sum(container[i].get_height() for container in cpu_containers)
-        x = cpu_containers[0][i].get_x() + cpu_containers[0][i].get_width()/2
+        x = cpu_containers[1][i].get_x() + cpu_containers[1][i].get_width()/2
         ax.text(
             x,
             total_height * 1.02,
@@ -176,24 +176,7 @@ ax.axhline(1.0, color="black", linewidth=1.5, linestyle="--")
 #ax.set_yscale("log", base=2)
 x = np.arange(len(pivot_mean))*x_axis_width_scale  # numeric positions for each benchmark
 # CPU stacked bars
-ax.bar(
-    x + bar_width/2, 
-    pivot_mean["base_cpu"], 
-    width=bar_width, 
-    color=color_cpu,
-    edgecolor=edge,
-    label="CPU Base"
-)
-ax.bar(
-    x + bar_width/2, 
-    pivot_mean["transform_norm"], 
-    width=bar_width, 
-    bottom=pivot_mean["base_cpu"], 
-    color=color_transform,
-    edgecolor=edge,
-    label="CPU Transform",
-    hatch='//'
-)
+
 # DTU bar (always 1)
 ax.bar(
     x - bar_width/2,
@@ -201,8 +184,31 @@ ax.bar(
     width=bar_width,
     color=color_dtu,
     edgecolor=edge,
-    label="DTU"
+    label="DTU",
+    hatch='\\\\'
 )
+
+
+ax.bar(
+    x + bar_width/2, 
+    pivot_mean["base_cpu"], 
+    width=bar_width, 
+    color=color_cpu,
+    edgecolor=edge,
+    label="CPU Base",
+    hatch='\\\\'
+)
+ax.bar(
+    x + bar_width/2, 
+    pivot_mean["transform_norm"], 
+    width=bar_width, 
+    bottom=pivot_mean["base_cpu"], 
+    color=color_cpu,
+    edgecolor=edge,
+    label="CPU Transform",
+    hatch='////'
+)
+
 batch_labels = sub_df.groupby("benchmark")["batch_size"].mean().loc[benchmark_order].astype(int)
 plot_ax(ax, pivot_mean, batch_labels, "Kernel Size", "Normalized Exec. Time", "DTU Vs. CPU Execution Time")
 label_total_bar(ax)
@@ -214,14 +220,23 @@ ax.set_ylim(0.0, 8)         # set lower and upper limits
 plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 handles = ax.containers  # bar containers only
-labels = ["CPU Only Compute", "CPU Only Transform", "DTU"]
+labels = ["w/ DTU", "CPU Only", "Transform", "Compute"]
+from matplotlib.patches import Patch
+handles = [
+    Patch(facecolor=color_dtu, edgecolor="black"),
+    Patch(facecolor=color_cpu, edgecolor="black"),
+    Patch(facecolor='none', edgecolor="black", hatch='////'),
+    Patch(facecolor='none', edgecolor="black", hatch='\\\\'),
+]
+
 ax.legend(
     handles,
     labels,
     loc="upper center",
-    bbox_to_anchor=(0.5, -0.45),
-    ncol=3,
-    fontsize=7
+    bbox_to_anchor=(0.5, -0.35),
+    ncol=4,
+    fontsize=8,
+    columnspacing=0.8,
 )
 
 
@@ -312,13 +327,15 @@ ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
 handles = ax.containers  # bar containers only
 ax.legend(
+    handles,
+    ["CPU only", "w/ DTU"],
     loc="upper center",
-    bbox_to_anchor=(0.5, -0.45),
-    handles=handles,
-    labels=["CPU only", "w/ DTU"],
+    bbox_to_anchor=(0.5, -0.35),
     ncol=2,
-    fontsize=7,
+    fontsize=8,
+    columnspacing=0.8,
 )
+
 
 
 ax.set_xlabel("Kernel Size", fontsize=12, fontweight="bold")

@@ -23,7 +23,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/dbproj2_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/dbproj_boom3.2.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -194,7 +194,7 @@ for ax, size in zip(axes, unique_sizes):
     pivot_mean["base_cpu"] = 1.0 
     
     pivot_mean["base_dtu"] = (pivot_mean["dtu"] + pivot_std["dtu"]) / pivot_std["cpu"]  # transform fraction
-
+    print(pivot_mean)
     pivot_mean["base_col"] = (pivot_std["col"] / pivot_std["cpu"])
 
  
@@ -283,8 +283,8 @@ llcrefill_avg /= len(unique_sizes)
 
 
 total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
-
 total_for_savings /= len(unique_sizes)
+
 dtu_update = {
     "benchmark" : "dbproj",
     "type": "dtu",
@@ -292,7 +292,7 @@ dtu_update = {
     "L1WB": l1wb_avg,
     "LLCRefill": llcrefill_avg,
     "LLCWB": llcwb_avg,
-    "memtrafic": total_for_savings
+    "memtraffic": total_for_savings
 }
 
 cpu_update = {

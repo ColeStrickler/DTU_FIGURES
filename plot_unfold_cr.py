@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 from matplotlib.ticker import LogLocator, ScalarFormatter
+from matplotlib.patches import Patch
 color_cpu       =         "#DAA1AC"
 color_transform =         "#cd808c"
 color_dtu       =         "#bc5566" 
@@ -36,8 +37,8 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/unfold_boom1.0.csv", skipinitialspace=True)
-
+df = pd.read_csv("data/unfold_boom3.2.csv", skipinitialspace=True)
+print(df)
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
 df["type"] = df["type"].str.strip()
@@ -47,9 +48,9 @@ df["type"] = df["type"].str.strip()
 # -----------------------------
 mode = df["benchmark"].str.extract(r'tensor_unfold_(\d+)')[0]
 tensor_sizes = df["benchmark"].str.extract(r'tensor_unfold_(\d+)_(\d+)')[1]
+print(tensor_sizes)
 
-
-df["tensor_size"] = tensor_sizes.map({'32': "64MB", '16': "32MB", '8': "16MB"})
+df["tensor_size"] = tensor_sizes.map({'64': "64MB",'32': "64MB", '16': "32MB", '8': "16MB"})
 print(df["tensor_size"])
 df["mode"] = mode.astype(int)
 #print(df["mode"])
@@ -61,16 +62,16 @@ unique_sizes.reverse()
 
 def label_total_bar(ax):
     # assume CPU stacked bars are the first two containers
-    cpu_containers = ax.containers[:2]  # base + transform
-    n_bars = len(cpu_containers[0])
+    cpu_containers = ax.containers[-2:]  # base + transform
+    n_bars = len(cpu_containers[1])
     
     for i in range(n_bars):
         total_height = sum(container[i].get_height() for container in cpu_containers)
-        x = cpu_containers[0][i].get_x() + cpu_containers[0][i].get_width()/2
+        x = cpu_containers[1][i].get_x() + cpu_containers[1][i].get_width()/2
         ax.text(
             x,
             total_height * 1.02,
-            f"{total_height:.2f}",
+            f"{total_height:.1f}",
             ha='center',
             va='bottom',
             fontsize=8
@@ -88,7 +89,7 @@ def label_total_bar2(ax):
         ax.text(
             x,
             total_height * 1.02,
-            f"{total_height:.2f}",
+            f"{total_height:.1f}",
             ha='center',
             va='bottom',
             fontsize=8
@@ -174,24 +175,7 @@ ax.axhline(1.0, color="black", linewidth=1.5, linestyle="--")
 #ax.set_yscale("log", base=2)
 x = np.arange(len(pivot_mean))*x_axis_width_scale  # numeric positions for each benchmark
 # CPU stacked bars
-ax.bar(
-    x + bar_width/2, 
-    pivot_mean["base_cpu"], 
-    width=bar_width, 
-    color=color_cpu,
-    edgecolor=edge,
-    label="CPU Base"
-)
-ax.bar(
-    x + bar_width/2, 
-    pivot_mean["transform_norm"], 
-    width=bar_width, 
-    bottom=pivot_mean["base_cpu"], 
-    color=color_transform,
-    edgecolor=edge,
-    label="CPU Transform",
-    hatch='//'
-)
+
 # DTU bar (always 1)
 ax.bar(
     x - bar_width/2,
@@ -199,25 +183,55 @@ ax.bar(
     width=bar_width,
     color=color_dtu,
     edgecolor=edge,
-    label="DTU"
+    label="DTU",
+    hatch='\\\\'
 )
+
+ax.bar(
+    x + bar_width/2, 
+    pivot_mean["base_cpu"], 
+    width=bar_width, 
+    color=color_cpu,
+    edgecolor=edge,
+    label="CPU Base",
+    hatch='\\\\'
+)
+ax.bar(
+    x + bar_width/2, 
+    pivot_mean["transform_norm"], 
+    width=bar_width, 
+    bottom=pivot_mean["base_cpu"], 
+    color=color_cpu,
+    edgecolor=edge,
+    label="CPU Transform",
+    hatch='////'
+)
+
 batch_labels = sub_df.groupby("benchmark")["mode"].mean().loc[benchmark_order].astype(int)
 plot_ax(ax, pivot_mean, batch_labels, "Mode", "Normalized Exec. Time", "DTU Vs. CPU Execution Time")
 label_total_bar(ax)
-ax.set_ylim(0.0, 8)         # set lower and upper limits
+ax.set_ylim(0.0, 12)         # set lower and upper limits
 
 
 plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 handles = ax.containers  # bar containers only
-labels = ["CPU Only Compute", "CPU Only Transform", "w/ DTU"]
+labels = ["w/ DTU", "CPU Only", "Transform", "Compute"]
+
+handles = [
+    Patch(facecolor=color_dtu, edgecolor="black"),
+    Patch(facecolor=color_cpu, edgecolor="black"),
+    Patch(facecolor='none', edgecolor="black", hatch='////'),
+    Patch(facecolor='none', edgecolor="black", hatch='\\\\'),
+]
+
 ax.legend(
     handles,
     labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.45),
-    ncol=3,
-    fontsize=7
+    ncol=4,
+    fontsize=9
 )
 
 
@@ -313,15 +327,16 @@ ax.set_ylim(0.0,4)
 # Optional: customize the ticks (base 10)
 
 handles = ax.containers  # bar containers only
-ax.legend(
-    loc="upper center",
-    bbox_to_anchor=(0.5, -0.45),
-    handles=handles,
-    labels=["CPU Only", "w/ DTU"],
-    ncol=2,
-    fontsize=7,
-)
 
+ax.legend(
+    handles,
+    labels,
+    loc="upper center",
+    bbox_to_anchor=(0.5, -0.38),
+    ncol=4,
+    fontsize=8,
+    columnspacing=0.8,
+)
 
 ax.set_xlabel("Mode", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly

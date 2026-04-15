@@ -243,7 +243,7 @@ fig.text(
 #fig.set_ylabel("Normalized Exec. Time", fontsize=12, fontweight="bold")
 
 
-total_for_savings /= len(unique_sizes)
+total_for_savings /= 8
 total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
 
 dtu_row = {

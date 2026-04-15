@@ -10,6 +10,9 @@ color_dtu       =         "#bc5566"
 color_savings       =    "#7FAFD4"     
 color_baseline =         "#345670" 
   
+color_cpu       = "#DAA1AC"   # Main magenta (bright but soft)
+color_inplace = "#cd808c"   # Mid-tone magenta
+color_dtu       = "#bc5566"   # Darker magenta
 
 
 
@@ -21,7 +24,7 @@ color_baseline =         "#345670"
 
 edge = "#2a2a2a"
 
-bar_width = 0.1
+bar_width = 0.07
 x_axis_width_scale = 0.25
 fig_height_scale = 3
 fig_width_scale = 4
@@ -31,43 +34,52 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/img_augmentation_boom3.2.csv", skipinitialspace=True)
-print(df["benchmark"].dtype)
-print(df["benchmark"].head(10))
+df = pd.read_csv("data/dbproj_boom1.0.csv", skipinitialspace=True)
+
 df["cycle"] = pd.to_numeric(df["cycle"])
-df["benchmark"] = df["benchmark"].astype(str).str.strip()
-df["type"] = df["type"].astype(str).str.strip()
+df["benchmark"] = df["benchmark"].str.strip()
+df["type"] = df["type"].str.strip()
+
 
 # -----------------------------
 # Extract image size
-# Extract image size
 # -----------------------------
-sizes = df["benchmark"].str.extract(r'img_augmentation_(\d+)_')[0]
-batch_size = df["benchmark"].str.extract(r'img_augmentation_(\d+)_(\d+)')[1]
-#print(batch_size)
-df["img_size"] = sizes + "x" + sizes
-df["img_size_num"] = sizes.astype(int)
-df["batch_size"] = batch_size.astype(int)
-#print(df["batch_size"])
+sizes = df["benchmark"].str.extract(r'_(\d+)$')[0]
+#print(sizes)
+df["row_size"] = sizes
+
+
+mode = df["benchmark"].str.extract(r'_(\d+)_(\d+)$')[0]
+print(mode)
+
+
+
+
+
+
+df["Columns"] = mode.astype(int)
+#print(df["mode"])
 # ---------------------
 
 
-unique_sizes = sorted(df["img_size_num"].unique())
-#print(unique_sizes)
-print(unique_sizes)
+unique_sizes = sorted(df["row_size"].unique())
+unique_sizes.reverse()
+
+
 
 def label_total_bar(ax):
     # assume CPU stacked bars are the first two containers
-    cpu_containers = ax.containers[-2:]  # base + transform
-    n_bars = len(cpu_containers[1])
+    cpu_container = ax.containers[0]  # base + transform
+    n_bars = len(cpu_container)
     
-    for i in range(n_bars):
-        total_height = sum(container[i].get_height() for container in cpu_containers)
-        x = cpu_containers[1][i].get_x() + cpu_containers[1][i].get_width()/2
+    for bar in cpu_container:
+        height = bar.get_height()
+        x = bar.get_x() + bar.get_width() / 2
+
         ax.text(
             x,
-            total_height * 1.02,
-            f"{total_height:.2f}",
+            height * 1.02,
+            f"{height:.2f}",
             ha='center',
             va='bottom',
             fontsize=8
@@ -126,27 +138,21 @@ def hatch_ax(ax):
 
 # Step 2: create a subplot for each image size, sharing the y-axis
 fig, axes = plt.subplots(
-    1, len(unique_sizes),      # one row, multiple columns
-    figsize=(fig_width_scale * len(unique_sizes), fig_height_scale),
+    1, 2,      # one row, multiple columns
+    figsize=(fig_width_scale * 2, fig_height_scale),
     sharey=False                # this is the shared y-axis
 )
 
-# Step 3: if only one size, axes is not a list, so wrap it
-if len(unique_sizes) == 1:
-    axes = [axes]
 
 #print(axes)  # just to check we have the correct axes objects
 i = 0
 ax = axes[0]
 
-ax.set_yscale("log", base=2)
-
-ax.set_yticks([0.1, 0.5, 1, 4, 16, 64,])
-ax.set_ylim(0.1, 128)
-
+ax.set_ylim(0.0, 6)
+print(df['row_size'])
 # Select only rows for this image size
 size = 256
-sub_df = df[df["img_size_num"] == size]
+sub_df = df[df["row_size"] == '128']
 # Aggregate per benchmark + type
 grouped = sub_df.groupby(["benchmark", "type"]).agg( # combine rows for the same benchmark and type (CPU or DTU).
 cycle_mean=("cycle", "mean"), # calculate mean and standard deviation for cycle and transform_cost.
@@ -161,17 +167,16 @@ pivot_std  = grouped.pivot(index="benchmark", columns="type", values="cycle_std"
 transform_mean = grouped.pivot(index="benchmark", columns="type", values="transform_mean")
 # Fraction of CPU spent on transform vs base execution
 
-pivot_mean["transform_n"] = transform_mean["cpu"] / pivot_mean["cpu"]  # transform fraction
-print("HEEEERREEE")
-pivot_mean["base_cpu"] = (1.0 - pivot_mean["transform_n"]) * (pivot_mean["cpu"] / pivot_mean["dtu"]) # remaining execution
-pivot_mean["transform_norm"] = pivot_mean["transform_n"] * (pivot_mean["cpu"] / pivot_mean["dtu"])
-pivot_mean["total"] = pivot_mean["base_cpu"] + pivot_mean["transform_norm"]
-print(pivot_mean)
+
+pivot_mean["base_cpu"] = pivot_mean["cpu"] / pivot_mean["dtu"]
+pivot_mean["base_col"] = pivot_mean["col"] / pivot_mean["dtu"] 
+pivot_mean["base_dtu"] = 1.0
+
 
 print( (pivot_mean["cpu"] / pivot_mean["dtu"])  )
 pivot_mean["dtu"] = 1.0
 # Keep the benchmark order sorted by batch_size
-benchmark_order = sub_df.groupby("benchmark")["batch_size"].mean().sort_values().index
+benchmark_order = sub_df.groupby("benchmark")["Columns"].mean().sort_values().index
 # Reindex pivot_mean so rows are in this order
 pivot_mean = pivot_mean.reindex(benchmark_order)
 pivot_std  = pivot_std.reindex(benchmark_order)
@@ -182,39 +187,37 @@ x = np.arange(len(pivot_mean))*x_axis_width_scale  # numeric positions for each 
 # CPU stacked bars
 
 
-# DTU bar (always 1)
-ax.bar(
-    x - bar_width/2,
-    pivot_mean["dtu"],
-    width=bar_width,
-    color=color_dtu,
-    edgecolor=edge,
-    label="DTU",
-    hatch='\\\\'
-)
 
+        # CPU stacked bars
 ax.bar(
-    x + bar_width/2, 
+    x + bar_width, 
     pivot_mean["base_cpu"], 
     width=bar_width, 
     color=color_cpu,
     edgecolor=edge,
-    label="CPU Base",
-    hatch='\\\\'
+    label="Row"
 )
 ax.bar(
-    x + bar_width/2, 
-    pivot_mean["transform_norm"], 
-    width=bar_width, 
-    bottom=pivot_mean["base_cpu"], 
-    color=color_transform,
+    x,
+    pivot_mean["base_col"],
+    width=bar_width,
+    color=color_inplace,
     edgecolor=edge,
-    label="CPU Transform",
-    hatch='////'
+    label="Col"
 )
 
-batch_labels = sub_df.groupby("benchmark")["batch_size"].mean().loc[benchmark_order].astype(int)
-plot_ax(ax, pivot_mean, batch_labels, "Batch Size", "Normalized Exec. Time", "DTU Vs. CPU Execution Time")
+# DTU bar (always 1)
+ax.bar(
+    x - bar_width,
+    pivot_mean["base_dtu"],
+    width=bar_width,
+    color=color_dtu,
+    edgecolor=edge,
+    label="DTU"
+)
+
+batch_labels = sub_df.groupby("benchmark")["Columns"].mean().loc[benchmark_order].astype(int)
+plot_ax(ax, pivot_mean, batch_labels, "Columns Projected", "Normalized Exec. Time", "DTU Vs. CPU Execution Time")
 label_total_bar(ax)
 
 
@@ -222,17 +225,8 @@ label_total_bar(ax)
 plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
 handles = ax.containers  # bar containers only
-labels = ["w/ DTU", "CPU Only", "Transform", "Compute"]
 
-handles = [
-    Patch(facecolor=color_dtu, edgecolor="black"),
-    Patch(facecolor=color_cpu, edgecolor="black"),
-    Patch(facecolor='none', edgecolor="black", hatch='////'),
-    Patch(facecolor='none', edgecolor="black", hatch='\\\\'),
-]
 ax.legend(
-    handles,
-    labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
     ncol=4,
@@ -288,7 +282,7 @@ data = []
 def img_aug2():
     return 8;
 
-for batch_size in [4,8,16,32,64]:
+for batch_size in [1,2,3,4,5,6,7,8]:
     data.append({
         "benchmark": batch_size,
         "memory usage": 1.0,
@@ -297,7 +291,7 @@ for batch_size in [4,8,16,32,64]:
 
     data.append({
         "benchmark": batch_size,
-        "memory usage": img_aug2(),
+        "memory usage": 1,
         "type": "base"
     })
 
@@ -333,8 +327,8 @@ ax.set_xticklabels(pivot.index, rotation=45, ha="right", fontsize=10, fontweight
 ax.set_ylabel("Normalized WSS Size", fontsize=12, fontweight="bold")
 ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
-ax.set_ylim(0.0,10)
-ax.set_yticks([0,1,5,10])
+ax.set_ylim(0.0,2.5)
+ax.set_yticks([0,1,2])
 # Set y-axis to logarithmic scale
 #ax.set_yscale('log', base=2)
 
@@ -353,7 +347,7 @@ ax.legend(
 
 
 
-ax.set_xlabel("Batch Size", fontsize=12, fontweight="bold")
+ax.set_xlabel("Columns Projected", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly
 #ax.set_yticks([1, 2, 3, 4])
 # Title for this subplot (optional)
@@ -363,6 +357,6 @@ ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
 
 
 
-plt.savefig("figures/imgaug_boom_cr.png", bbox_inches="tight")
-plt.savefig("figures/imgaug_boom_cr.pdf", bbox_inches="tight")
+plt.savefig("figures/dbproj_boom_cr.png", bbox_inches="tight")
+plt.savefig("figures/dbproj_boom_cr.pdf", bbox_inches="tight")
 plt.show()

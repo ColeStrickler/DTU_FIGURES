@@ -23,7 +23,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/unfold2_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/unfold_boom3.2.csv", skipinitialspace=True)
 
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -259,7 +259,7 @@ dtu_update = {
     "L1WB": l1wb_avg,
     "LLCRefill": llcrefill_avg,
     "LLCWB": llcwb_avg,
-    "memtrafic": total_for_savings
+    "memtraffic": total_for_savings
 }
 
 cpu_update = {

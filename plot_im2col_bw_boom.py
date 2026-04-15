@@ -23,7 +23,7 @@ fig_width_scale = 4
 # -----------------------------
 # Load + clean
 # -----------------------------
-df = pd.read_csv("data/im2col2_boom1.0.csv", skipinitialspace=True)
+df = pd.read_csv("data/im2col_boom3.2.csv", skipinitialspace=True)
 #print(df)
 df["cycle"] = pd.to_numeric(df["cycle"])
 df["benchmark"] = df["benchmark"].str.strip()
@@ -248,7 +248,7 @@ l1wb_avg /= len(unique_sizes)
 llcwb_avg /= len(unique_sizes)
 llcrefill_avg /= len(unique_sizes)
 
-
+print(total_for_savings)
 
 total_df = pd.read_csv("data/avg_memory_traffic_boom.csv")
 total_for_savings /= len(unique_sizes)
@@ -259,7 +259,7 @@ dtu_update = {
     "L1WB": l1wb_avg,
     "LLCRefill": llcrefill_avg,
     "LLCWB": llcwb_avg,
-    "memtrafic": total_for_savings
+    "memtraffic": total_for_savings
 }
 
 cpu_update = {
