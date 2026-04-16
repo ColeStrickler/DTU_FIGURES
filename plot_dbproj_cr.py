@@ -119,7 +119,7 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel, title=f"Image size {'720x1080'
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
 
     # Title for this subplot (optional)
-    ax.set_title(title, fontsize=12, fontweight="bold")
+    #ax.set_title(title, fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -224,16 +224,25 @@ label_total_bar(ax)
 
 plt.tight_layout(pad=3.0)
 #fig.subplots_adjust(right=0.85)  # leave space for legend on right
-handles = ax.containers  # bar containers only
+from matplotlib.patches import Patch
+
+handles = [
+    Patch(facecolor=color_dtu, edgecolor="black"),                     # DTU
+    Patch(facecolor=color_inplace, edgecolor="black"),                     # CPU Base
+    Patch(facecolor=color_cpu, edgecolor="black") # CPU Transform
+]
+
+labels = ["DTU", "Col", "Row"]
 
 ax.legend(
+    handles,
+    labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
-    ncol=4,
+    ncol=3,
     fontsize=8,
     columnspacing=0.8,
 )
-
 
 
 ax.text(
@@ -325,7 +334,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(pivot.index, rotation=45, ha="right", fontsize=10, fontweight="bold")
 
 ax.set_ylabel("Normalized WSS Size", fontsize=12, fontweight="bold")
-ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
+#ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
 ax.set_ylim(0.0,2.5)
 ax.set_yticks([0,1,2])
@@ -334,10 +343,16 @@ ax.set_yticks([0,1,2])
 
 # Optional: customize the ticks (base 10)
 
-handles = ax.containers  # bar containers only
+handles = [
+    Patch(facecolor=color_savings, edgecolor="black"),                     # DTU
+    Patch(facecolor=color_baseline, edgecolor="black"),                     # CPU Base
+]
+
+labels =     ["w/ DTU", "CPU only"]
+
 ax.legend(
     handles,
-    ["CPU only", "w/ DTU"],
+    labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
     ncol=2,
@@ -351,7 +366,7 @@ ax.set_xlabel("Columns Projected", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly
 #ax.set_yticks([1, 2, 3, 4])
 # Title for this subplot (optional)
-ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
+#ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
 # Legend
 #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
 

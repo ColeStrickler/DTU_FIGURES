@@ -23,14 +23,14 @@ plt.rcParams.update({
 })
 df = pd.read_csv("data/avg_memory_traffic_boom.csv")
 pivot = df.pivot(index="benchmark", columns="type", values="memtraffic")
-
+pivot = pivot[["dtu", "cpu"]]
 fig, ax = plt.subplots(figsize=(7.2, 4.3))
 
 
-colors = ["#7FAFD4", "#345670" ]
+colors = ["#345670","#7FAFD4" ]
 #colors = ['#4d4d4d', '#bfbfbf']
-hatches = ['///', 'xxx']
-
+hatches = ['xxx', '///']
+labels = ["w/ DTU", "CPU Only"]
 pivot.plot(
     kind="bar",
     ax=ax,
@@ -48,8 +48,8 @@ for i, container in enumerate(ax.containers):
 ax.axhline(y=1.0, color='black', linestyle='--', linewidth=1)
 
 # Labels and styling
-ax.set_ylabel("Avg. Total DRAM Traffic (Normalized)", fontsize=9)
-ax.set_title("DTU vs CPU DRAM Traffic by Benchmark", fontsize=9)
+ax.set_ylabel("Avg. Total DRAM Traffic (Normalized)", fontsize=11)
+#ax.set_title("DTU vs CPU DRAM Traffic by Benchmark", fontsize=9)
 ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
 ax.set_xlabel("")
 ax.spines['top'].set_visible(False)
@@ -60,11 +60,10 @@ ax.set_axisbelow(True)
 ax.set_ylim(0,1.6)
 
 handles = ax.containers  # bar containers only
-labels = ["CPU", "DTU"]
 ax.legend(handles, labels)
 # Optional: remove legend entirely
 
-dtu_container = ax.containers[1]
+dtu_container = ax.containers[0]
 
 for bar in dtu_container:
     height = bar.get_height()

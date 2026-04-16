@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-from matplotlib.ticker import LogLocator, ScalarFormatter
+from matplotlib.ticker import LogLocator, ScalarFormatter,FormatStrFormatter
 from matplotlib.patches import Patch
 color_cpu       =         "#DAA1AC"
 color_transform =         "#cd808c"
@@ -109,9 +109,9 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel, title=f"Image size {'720x1080'
     # Define ticks you want explicitly
     #ax.set_yticks([1, 2, 3, 4])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
-
+    
     # Title for this subplot (optional)
-    ax.set_title(title, fontsize=12, fontweight="bold")
+    #ax.set_title(title, fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -318,24 +318,29 @@ ax.set_xticks(x)
 ax.set_xticklabels(pivot.index, rotation=45, ha="right", fontsize=10, fontweight="bold")
 
 ax.set_ylabel("Normalized WSS Size", fontsize=12, fontweight="bold")
-ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
+#ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
 ax.set_yscale("log", base=2)
 
 ax.set_yticks([0.1, 1, 4, 16, 64])
 ax.set_ylim(0.1, 128)
 
-ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
-
+ax.yaxis.set_major_formatter(FormatStrFormatter('%d'))
 # Set y-axis to logarithmic scale
 #ax.set_yscale('log', base=2)
 
 # Optional: customize the ticks (base 10)
 
-handles = ax.containers  # bar containers only
+handles = [
+    Patch(facecolor=color_savings, edgecolor="black"),                     # DTU
+    Patch(facecolor=color_baseline, edgecolor="black"),                     # CPU Base
+]
+
+labels =     ["w/ DTU", "CPU only"]
+
 ax.legend(
     handles,
-    ["CPU only", "w/ DTU"],
+    labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
     ncol=2,
@@ -346,11 +351,13 @@ ax.legend(
 
 
 
+
+
 ax.set_xlabel("Kernel Size", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly
 #ax.set_yticks([1, 2, 3, 4])
 # Title for this subplot (optional)
-ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
+#ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
 # Legend
 #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
 

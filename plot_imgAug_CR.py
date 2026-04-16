@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-from matplotlib.ticker import LogLocator, ScalarFormatter
+from matplotlib.ticker import LogLocator, ScalarFormatter, FormatStrFormatter
 from matplotlib.patches import Patch
 color_cpu       =         "#DAA1AC"
 color_transform =         "#cd808c"
@@ -50,6 +50,9 @@ df["img_size_num"] = sizes.astype(int)
 df["batch_size"] = batch_size.astype(int)
 #print(df["batch_size"])
 # ---------------------
+
+keep = [4,16, 64]
+df = df[df["batch_size"].isin(keep)]
 
 
 unique_sizes = sorted(df["img_size_num"].unique())
@@ -104,10 +107,9 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel, title=f"Image size {'720x1080'
 
     # Define ticks you want explicitly
     #ax.set_yticks([1, 2, 3, 4])
-    ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
-
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%d'))
     # Title for this subplot (optional)
-    ax.set_title(title, fontsize=12, fontweight="bold")
+    #ax.set_title(title, fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -141,7 +143,7 @@ ax = axes[0]
 
 ax.set_yscale("log", base=2)
 
-ax.set_yticks([0.1, 0.5, 1, 4, 16, 64,])
+ax.set_yticks([1, 4, 16, 64])
 ax.set_ylim(0.1, 128)
 
 # Select only rows for this image size
@@ -207,7 +209,7 @@ ax.bar(
     pivot_mean["transform_norm"], 
     width=bar_width, 
     bottom=pivot_mean["base_cpu"], 
-    color=color_transform,
+    color=color_cpu,
     edgecolor=edge,
     label="CPU Transform",
     hatch='////'
@@ -288,7 +290,7 @@ data = []
 def img_aug2():
     return 8;
 
-for batch_size in [4,8,16,32,64]:
+for batch_size in [4,16,64]:
     data.append({
         "benchmark": batch_size,
         "memory usage": 1.0,
@@ -331,7 +333,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(pivot.index, rotation=45, ha="right", fontsize=10, fontweight="bold")
 
 ax.set_ylabel("Normalized WSS Size", fontsize=12, fontweight="bold")
-ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
+#ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
 ax.set_ylim(0.0,10)
 ax.set_yticks([0,1,5,10])
@@ -341,9 +343,17 @@ ax.set_yticks([0,1,5,10])
 # Optional: customize the ticks (base 10)
 
 handles = ax.containers  # bar containers only
+
+handles = [
+    Patch(facecolor=color_savings, edgecolor="black"),                     # DTU
+    Patch(facecolor=color_baseline, edgecolor="black"),                     # CPU Base
+]
+
+labels =     ["w/ DTU", "CPU only"]
+
 ax.legend(
     handles,
-    ["CPU only", "w/ DTU"],
+    labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
     ncol=2,
@@ -357,7 +367,7 @@ ax.set_xlabel("Batch Size", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly
 #ax.set_yticks([1, 2, 3, 4])
 # Title for this subplot (optional)
-ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
+#ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
 # Legend
 #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
 

@@ -69,22 +69,9 @@ for i, metric in enumerate(metrics):
 
     cpu = df[df["type"] == "cpu"].set_index("benchmark").reindex(benchmarks)[metric]
     dtu = df[df["type"] == "dtu"].set_index("benchmark").reindex(benchmarks)[metric]
-
-    # CPU bars
-    ax.bar(
-        x - width/2,
-        cpu,
-        width,
-        label="CPU",
-        color=colors[0],
-        hatch=hatches[0],
-        edgecolor="black",
-        linewidth=0.6
-    )
-
-    # DTU bars
+        # DTU bars
     dtu_bars = ax.bar(
-        x + width/2,
+        x - width/2,
         dtu,
         width,
         label="DTU",
@@ -94,13 +81,28 @@ for i, metric in enumerate(metrics):
         linewidth=0.6
     )
 
+
+    # CPU bars
+    ax.bar(
+        x + width/2,
+        cpu,
+        width,
+        label="CPU",
+        color=colors[0],
+        hatch=hatches[0],
+        edgecolor="black",
+        linewidth=0.6
+    )
+
+
+
     for bar in dtu_bars:
         height = bar.get_height()
         if np.isnan(height):
             continue
 
         ax.text(
-            bar.get_x() + 1.38 * bar.get_width() / 2,
+            bar.get_x() + 0.8 * bar.get_width() / 2,
             height + 0.02 * height,   # small vertical offset
             f"{height:.2f}",
             ha="center",
@@ -108,7 +110,7 @@ for i, metric in enumerate(metrics):
             fontsize=6,
         )
     if i == 0 or i == 2:
-        ax.set_ylabel(f"Normalized Traffic")
+        ax.set_ylabel(f"Normalized Traffic", fontsize=11)
     ax.set_title(metric)
     ax.grid(True, axis="y", alpha=0.3, linewidth=0.5)
 
@@ -118,15 +120,20 @@ for i, metric in enumerate(metrics):
 for ax in axes:
     ax.set_xticks(x)
     ax.set_xticklabels(benchmarks, rotation=45, ha="right")
+    ax.set_ylim(0, 1.15)
 
 legend_elements = [
+    Patch(facecolor="#bc5566" , edgecolor="black", hatch="xxx", label="DTU"),
     Patch(facecolor="#DAA1AC", edgecolor="black", hatch="///", label="CPU"),
-    Patch(facecolor="#bc5566" , edgecolor="black", hatch="xxx", label="DTU")
 ]
+
+labels = ["w/ DTU", "CPU Only"]
 
 fig.legend(
     handles=legend_elements,
+    labels = labels,
     loc="upper center",
+    bbox_to_anchor=(0.535, 1.02),
     ncol=2,
 )
 

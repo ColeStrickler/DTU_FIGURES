@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import re
-from matplotlib.ticker import LogLocator, ScalarFormatter
+from matplotlib.ticker import LogLocator, ScalarFormatter,FormatStrFormatter
 from matplotlib.patches import Patch
 color_cpu       =         "#DAA1AC"
 color_transform =         "#cd808c"
@@ -71,7 +71,7 @@ def label_total_bar(ax):
         ax.text(
             x,
             total_height * 1.02,
-            f"{total_height:.1f}",
+            f"{total_height:.2f}",
             ha='center',
             va='bottom',
             fontsize=8
@@ -89,7 +89,7 @@ def label_total_bar2(ax):
         ax.text(
             x,
             total_height * 1.02,
-            f"{total_height:.1f}",
+            f"{total_height:.2f}",
             ha='center',
             va='bottom',
             fontsize=8
@@ -108,9 +108,9 @@ def plot_ax(ax, pivot_mean, index, xlabel,ylabel, title=f"Image size {'720x1080'
     # Define ticks you want explicitly
     #ax.set_yticks([1, 2, 3, 4])
     ax.yaxis.set_major_formatter(ScalarFormatter())  # show normal numbers instead of scientific
-
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%d'))
     # Title for this subplot (optional)
-    ax.set_title(title, fontsize=12, fontweight="bold")
+    #ax.set_title(title, fontsize=12, fontweight="bold")
 
     # Legend
     #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
@@ -210,7 +210,7 @@ ax.bar(
 batch_labels = sub_df.groupby("benchmark")["mode"].mean().loc[benchmark_order].astype(int)
 plot_ax(ax, pivot_mean, batch_labels, "Mode", "Normalized Exec. Time", "DTU Vs. CPU Execution Time")
 label_total_bar(ax)
-ax.set_ylim(0.0, 12)         # set lower and upper limits
+ax.set_ylim(0.0, 13)         # set lower and upper limits
 
 
 plt.tight_layout(pad=3.0)
@@ -225,13 +225,15 @@ handles = [
     Patch(facecolor='none', edgecolor="black", hatch='\\\\'),
 ]
 
+
 ax.legend(
     handles,
     labels,
     loc="upper center",
-    bbox_to_anchor=(0.5, -0.45),
+    bbox_to_anchor=(0.5, -0.38),
     ncol=4,
-    fontsize=9
+    fontsize=8,
+    columnspacing=0.8,
 )
 
 
@@ -318,7 +320,7 @@ ax.set_xticks(x)
 ax.set_xticklabels(pivot.index, rotation=45, ha="right", fontsize=10, fontweight="bold")
 
 ax.set_ylabel("Normalized WSS Size", fontsize=12, fontweight="bold")
-ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
+#ax.set_title("CPU vs. DTU WSS Size", fontsize=12, fontweight="bold")
 
 ax.set_ylim(0.0,4)
 # Set y-axis to logarithmic scale
@@ -328,21 +330,27 @@ ax.set_ylim(0.0,4)
 
 handles = ax.containers  # bar containers only
 
+handles = [
+    Patch(facecolor=color_savings, edgecolor="black"),                     # DTU
+    Patch(facecolor=color_baseline, edgecolor="black"),                     # CPU Base
+]
+
+labels =     ["w/ DTU", "CPU only"]
+
 ax.legend(
     handles,
     labels,
     loc="upper center",
     bbox_to_anchor=(0.5, -0.38),
-    ncol=4,
+    ncol=2,
     fontsize=8,
     columnspacing=0.8,
 )
-
 ax.set_xlabel("Mode", fontsize=12, fontweight="bold")
 # Define ticks you want explicitly
 #ax.set_yticks([1, 2, 3, 4])
 # Title for this subplot (optional)
-ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
+#ax.set_title("DTU vs. CPU WSS", fontsize=12, fontweight="bold")
 # Legend
 #ax.legend(["DTU","CPU Base", "CPU Transform"], fontsize=6)
 
